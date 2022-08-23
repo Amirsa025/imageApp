@@ -1,29 +1,55 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
-  StyleSheet,
-  View,
   FlatList,
   SafeAreaView,
+  StyleSheet,
   TouchableOpacity,
+  View,
 } from 'react-native';
 import ListImage from '../components/ListImage/ListImage';
-import {UseImage} from '../context/ImageContext';
 import Icon from 'react-native-vector-icons/Ionicons';
-const Home = ({navigation}) => {
-  const {imageData, data} = UseImage();
-  console.log('src:', data);
-  const renderItem = ({item}) => {
-    return <ListImage src={item.src} />;
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useIsFocused} from '@react-navigation/native';
+
+const Home = ({navigation, route}) => {
+  const [ImageUpdate, setImageUpdate] = React.useState([]);
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    if (isFocused) {
+      console.log('mounted');
+      getData().then();
+    } else if (isFocused === false) {
+      console.log('unmounted from navigate upload ');
+    }
+  }, [isFocused]);
+
+  const getData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('uploadFromHome');
+      const item = {uri: value, id: Math.floor(Math.random() * 100)};
+      if (item.uri !== null) {
+        setImageUpdate([...ImageUpdate, item]);
+        console.log('value', ImageUpdate);
+        await AsyncStorage.clear();
+      } else {
+        console.log("'unfocused'");
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  const renderImage = ({item}) => {
+    return <ListImage src={{uri: item.uri}} />;
   };
   return (
     <View style={styles.container}>
       <View>
         <SafeAreaView style={styles.ListImage}>
           <FlatList
+            data={ImageUpdate}
             numColumns={3}
-            data={imageData}
-            renderItem={renderItem}
-            keyExtractor={item => item.title}
+            renderItem={renderImage}
+            keyExtractor={item => item.id}
           />
         </SafeAreaView>
       </View>

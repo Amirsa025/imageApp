@@ -1,9 +1,9 @@
-import React, {useState, useEffect} from 'react';
-import {View, PermissionsAndroid, Platform} from 'react-native';
+import {useEffect} from 'react';
+import {PermissionsAndroid, Platform} from 'react-native';
 import * as ImagePicker from 'react-native-image-picker';
-
+import {UseImage} from '../context/ImageContext';
 const Camera = ({navigation}) => {
-  const [file, setFiles] = useState({});
+  const {setImage} = UseImage();
   useEffect(() => {
     captureImage('photo').then();
   }, []);
@@ -61,11 +61,11 @@ const Camera = ({navigation}) => {
     const isCameraPermission = await requestPermissions();
     const isStoragePermitted = await requestExternalWritePermission();
     if ((isCameraPermission, isStoragePermitted)) {
-      await ImagePicker.launchCamera(options, response => {
+      await ImagePicker.launchCamera(options, async response => {
         console.log('response' + response);
         if (response.didCancel) {
           console.log('User cancelled camera picker');
-          return false;
+          return navigation.navigate('uploadPage');
         } else if (response.errorCode === 'camera_unavailable') {
           console.log('Camera not available on device');
         } else if (response.errorCode === 'permission') {
@@ -75,12 +75,11 @@ const Camera = ({navigation}) => {
           console.log(response.errorMessage);
           return false;
         }
-        setFiles(response);
+        setImage(response.assets.map(item => item.uri));
         navigation.goBack();
       });
     }
   };
-  return <View />;
 };
 
 export default Camera;
